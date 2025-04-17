@@ -1,0 +1,486 @@
+package com.mycompany.main;
+
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+import java.time.LocalDateTime;
+
+// parent class defined for the User module
+abstract class User {
+    private int Id;       // unique ID for each     
+    private String name;
+    private String email;
+    private String userType;  // patient or doctor for example
+
+// parent class constructor
+    public User(int Id, String name, String email, String userType) {
+        this.Id = Id;
+        this.name = name;
+        this.email = email;
+        this.userType = userType;
+    }
+
+// getter and setter methods for attributes
+    public int getId() { return Id; }
+    public void setId(int Id) { this.Id = Id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getUserType() { return userType; }
+    public void setUserType(String userType) { this.userType = userType; }
+    
+// overrifing to string method to print our string.
+       @Override
+    public String toString() { return name + " is at the hospital as a " + userType + ". User ID: " + Id; }
+}
+
+// Patient class is a subclass of User class
+class Patient extends User {
+// has arraylists as this class also stores the following things,their classes exist below
+    private List<VitalSign> vitalSigns = new ArrayList<>();
+    private List<Appointment> appointments = new ArrayList<>();
+    private List<Feedback> feedbacks = new ArrayList<>();
+
+// constructor of patient class
+    public Patient(int userId, String name, String email) {
+        super(userId, name, email, "Patient");
+    } //uses super to call parent constructor
+
+// Getter methods and adding to list methods both given respectively
+    public List<VitalSign> getVitalSigns() { return vitalSigns; }
+    public void addVitalSign(VitalSign vitalSign) { vitalSigns.add(vitalSign); }
+    // for appointments
+    public List<Appointment> getAppointments() { return appointments; }
+    public void addAppointment(Appointment appointment) { appointments.add(appointment); }
+    // for doctor's feedback
+    public List<Feedback> getFeedbacks() { return feedbacks; }
+    public void addFeedback(Feedback feedback) { feedbacks.add(feedback); }
+}
+
+// Doctor class
+class Doctor extends User {
+    // array lists to store appt. and feedbacks
+    private List<Appointment> appointments = new ArrayList<>();
+    private List<Feedback> feedbacks = new ArrayList<>();
+    // constructor
+    public Doctor(int userId, String name, String email) {
+    super(userId, name, email, "Doctor"); //call parent constrcutor
+    }
+    
+    // for appointments
+    public List<Appointment> getAppointments() { return appointments; }
+    public void addAppointment(Appointment appointment) { appointments.add(appointment); }
+    // for feeddbacks
+    public List<Feedback> getFeedbacks() { return feedbacks; }
+    public void addFeedback(Feedback feedback) { feedbacks.add(feedback); }
+}
+
+// Administrator class
+class Administrator extends User {
+    //contains a list of all users
+    private List<User> users = new ArrayList<>();
+// constructor, calls super for parent
+    public Administrator(int userId, String name, String email) {
+        super(userId, name, email, "Administrator");
+    }
+// methids to change lists by adding or removing users.
+    public List<User> getUsers() { return users; }
+    public void addUser(User user) { users.add(user); }
+    public void removeUser(User user) { users.remove(user); }
+}
+
+// VitalSign class
+class VitalSign {
+    private String type; // BP, Blood Oxygen, etc.
+    private double value;
+    private LocalDateTime timestamp;  // gives time of recording.
+
+    public VitalSign(String type, double value) {
+    this.type = type;
+    this.value = value;
+    this.timestamp = LocalDateTime.now();  // initializes with current time
+    }
+
+    // Getter and Setter methods for attributes
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+
+    public double getValue() { return value; }
+    public void setValue(double value) { this.value = value; }
+
+    public LocalDateTime getTimestamp() { return timestamp; }
+    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+
+    @Override
+    public String toString() {
+        return type + ": " + value + " recorded at " + timestamp;
+    }
+}
+
+// VitalSignDatabase class
+class VitalSignDatabase {
+    
+    //array list to store patients and effectively check their vitals easily
+    private List<Patient> patients = new ArrayList<>();
+    // adding to list of patients
+    public void addPatient(Patient patient) {
+    patients.add(patient);  // adding to lists
+    }
+
+// method to obtain a specific patient's vitals.
+    public List<VitalSign> getVitalSigns(int patientId) {
+        for (Patient patient : patients) {   // a for each loop
+            if (patient.getId() == patientId) {  //checks for match.
+                return patient.getVitalSigns();  
+            }
+        }
+        return new ArrayList<>();
+    }
+// method prints all patients vitals
+    public void printAllVitals() {
+        for (Patient patient : patients) {   // all patients checked for vitals
+            System.out.println(patient);    
+            // but no specifc checks here, all patients iterated to print   
+            for (VitalSign vitalSign : patient.getVitalSigns()) {
+                System.out.println("  " + vitalSign);
+            }
+        }
+    }
+}
+class Appointment {
+    private String date;  // Using String instead of Date
+    private Doctor doctor;
+    private Patient patient;
+
+    public Appointment(String date, Doctor doctor, Patient patient) {
+        this.date = date;
+        this.doctor = doctor;
+        this.patient = patient;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public Doctor getDoctor() {
+        return doctor;
+    }
+
+    public Patient getPatient() {
+        return patient;
+    }
+
+    @Override
+    public String toString() {
+        return "Appointment with Dr. " + doctor.getName() + " for " + patient.getName() + " on " + date;
+    }
+}
+class AppointmentManager {
+    private List<Appointment> appointments = new ArrayList<>();
+
+    public String requestAppt(String dateStr, Doctor doctor, Patient patient) {
+        // Check if appointment already exists
+        for (Appointment existingAppt : appointments) {
+            if (existingAppt.getDate().equals(dateStr) && existingAppt.getDoctor().equals(doctor)) {
+                return "Appointment conflict: Doctor is already booked.";
+            }
+        }
+        // If no conflict, create and add appointment
+        Appointment appointment = new Appointment(dateStr, doctor, patient);
+        appointments.add(appointment);
+        return "Appointment scheduled: " + appointment;
+    }
+
+    public List<Appointment> getAppointments() {
+        return appointments;
+    }
+}
+class Feedback { 
+    // attributes in a feedback
+    private final String feedback;
+    private final List<Prescription> medications;   
+    private final String date;
+    private final int Id;
+
+// constructor for class to initialize
+    public Feedback(String feedback, List<Prescription> medications, int Id) {
+        this.feedback = feedback;
+        this.medications = new ArrayList<>(medications);
+        this.date = LocalDateTime.now().toString();
+        this.Id = Id;
+    }
+
+// getter methods to obtain all the information.
+    public String getFeedback() { return feedback; }
+    public List<Prescription> getMedications() { return new ArrayList<>(medications); }
+    public String getDate() { return date; }
+    public int getId() { return Id; }
+}
+
+// The prescribed medicines to the patients by Doctor
+class Prescription {
+    private String medicine;
+    private String dosage;
+    private String schedule;
+    private int Id;
+    private List<Prescription> medicationList = new ArrayList<>();
+
+// constructor for the class
+    public Prescription(String medicine, String dosage, String schedule, int userId) {
+        this.medicine = medicine;
+        this.dosage = dosage;
+        this.schedule = schedule;
+        this.Id = Id;
+        medicationList.add(this);  // adds these to list
+    }
+
+// getter methids for information for prescription
+    public String getMedicine() { return medicine; }
+    public String getDosage() { return dosage; }
+    public String getSchedule() { return schedule; }
+    public int getId() { return Id; }
+}
+
+// Storing all the history of patients
+class MedicalHistory {
+    // lists that stored information
+    private List<Appointment> pastAppointments;
+    private List<Prescription> prescriptions;
+
+    public MedicalHistory() {  // constructor for making lists
+        this.pastAppointments = new ArrayList<>();
+        this.prescriptions = new ArrayList<>();
+    }
+
+    // Getters
+    public List<Appointment> getPastAppointments() {
+        return pastAppointments;
+    }
+
+    public List<Prescription> getPrescriptions() {
+        return prescriptions;
+    }
+
+    // Methods to add items to the lists
+    public void addAppointment(Appointment appointment) {
+        pastAppointments.add(appointment);
+    }
+
+    public void addPrescription(Prescription prescription) {
+        prescriptions.add(prescription);
+    }
+
+    // Method to print out all past appointments and prescriptions for viewing
+    public void printHistory() {
+        System.out.println("Medical History:");
+        if (pastAppointments.isEmpty() && prescriptions.isEmpty()) {
+            System.out.println("No medical history available.");
+            return;
+        }
+    // checking for them here
+        if (!pastAppointments.isEmpty()) {
+            System.out.println("Past Appointments:");
+            for (Appointment appointment : pastAppointments) {
+                System.out.println(" - " + appointment);
+            }
+        }
+
+        if (!prescriptions.isEmpty()) {
+            System.out.println("Prescriptions:");
+            for (Prescription prescription : prescriptions) {
+                System.out.println(" - " + prescription);
+            }
+        }
+    }
+}
+
+public class Main {  // main programme of the code
+    private static Scanner scanner = new Scanner(System.in);
+    private static Administrator admin = new Administrator(1, "Haqiq", "hkhan@bsds24");  // MANUALLY USING AN ADMIN TO START OFF
+    private static AppointmentManager appointmentManager = new AppointmentManager();  // object of Appointment Mnager class
+
+    public static void main(String[] args) {
+        System.out.println("Hospital Management System");
+        while (true) {
+            System.out.println("\nEnter number to choose from below:");
+            System.out.println("1. Add Doctor");
+            System.out.println("2. Add Patient");
+            System.out.println("3. View System users");
+            System.out.println("4. Schedule an Appointment");
+            System.out.println("5. View Appointments");
+            System.out.println("6. Add Doctor Feedback");
+            System.out.println("7. Exit");
+            System.out.print("Enter your choice: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // input received
+            switch (choice) {  // menu bar for user to choose, it directs to specific methods called and tasks performed
+                case 1:
+                    addDoctor();
+                    break;
+                case 2:
+                    addPatient();  
+                    break;
+                case 3:
+                    viewUsers();
+                    break;
+                case 4:
+                    scheduleAppointment();
+                    break;
+                case 5:
+                    viewAppointments();
+                    break;
+                case 6:
+                    addDoctorFeedback();
+                    break;
+                case 7:
+                    System.out.println("Exit.");
+                    return;
+                default:
+                    System.out.println("Invalid.");
+            }
+        }
+    }
+
+    private static void addDoctor() {   // using modules to add data.
+        System.out.print("Enter Doctor ID: ");
+        int id = scanner.nextInt(); // input received
+        scanner.nextLine();
+        System.out.print("Enter Doctor Name: ");
+        String name = scanner.nextLine();
+        System.out.print("Enter Doctor Email: ");
+        String email = scanner.nextLine();
+
+        Doctor doctor = new Doctor(id, name, email);
+        admin.addUser(doctor);
+        System.out.println("Doctor added successfully!");
+    }
+
+    private static void addPatient() {
+        System.out.print("Enter Patient ID: ");
+        int id = scanner.nextInt();
+        scanner.nextLine();
+        System.out.print("Enter Patient Name: ");
+        String name = scanner.nextLine();
+        System.out.print("Enter Patient Email: ");
+        String email = scanner.nextLine();
+
+        Patient patient = new Patient(id, name, email);
+        
+        // Now, ask for vital signs after adding the patient
+        System.out.println("Enter Vital Signs for " + name + ":");
+        System.out.print("Enter Vital Type (e.g., Blood Pressure, Blood Oxygen, etc.): ");
+        String vitalType = scanner.nextLine();
+        System.out.print("Enter Vital Value: ");
+        double vitalValue = scanner.nextDouble();
+        scanner.nextLine();  // to consume the newline
+        
+        VitalSign vitalSign = new VitalSign(vitalType, vitalValue);
+        patient.addVitalSign(vitalSign);
+
+        admin.addUser(patient);
+        System.out.println("Patient added successfully with vital signs!");
+    }
+
+    private static void viewUsers() {
+        List<User> users = admin.getUsers();
+        if (users.isEmpty()) {
+            System.out.println("No users found.");
+        } else {
+            System.out.println("\nList of Users:");
+            for (User user : users) {
+                System.out.println(user);
+            }
+        }
+    }
+
+    private static void scheduleAppointment() {
+        System.out.print("Enter Appointment ID: ");
+        int id = scanner.nextInt();
+        scanner.nextLine();
+        System.out.print("Enter Doctor Name: ");
+        String doctorName = scanner.nextLine();
+        System.out.print("Enter Patient Name: ");
+        String patientName = scanner.nextLine();
+        System.out.print("Enter Date as 2005-30-11: ");
+        String date = scanner.nextLine();
+
+        Doctor doctor = null;   //default.
+        Patient patient = null;
+
+        for (User user : admin.getUsers()) {
+            if (user instanceof Doctor && user.getName().equalsIgnoreCase(doctorName)) {
+                doctor = (Doctor) user;
+            } else if (user instanceof Patient && user.getName().equalsIgnoreCase(patientName)) {
+                patient = (Patient) user;
+            }
+        }
+
+        if (doctor != null && patient != null) {
+            Appointment appointment = new Appointment(date, doctor, patient);
+            String result = appointmentManager.requestAppt(date, doctor, patient);
+            System.out.println(result);
+            System.out.println("Appointment scheduled successfully!");
+        } else {
+            System.out.println("Doctor or Patient not found. Please add them first.");
+        }
+    }
+
+    private static void viewAppointments() {
+        List<Appointment> appointments = appointmentManager.getAppointments();
+        if (appointments.isEmpty()) {
+            System.out.println("No appointments scheduled.");
+        } else {
+            System.out.println("\nList of Appointments:");
+            for (Appointment appointment : appointments) {
+                System.out.println(appointment);
+            }
+        }
+    }
+
+    // New method to allow doctors to add feedback for patients
+    private static void addDoctorFeedback() {
+        System.out.print("Enter Patient Name to provide feedback: ");
+        String patientName = scanner.nextLine();
+        Patient patient = null;
+        
+        // Search for the patient
+        for (User user : admin.getUsers()) {
+            if (user instanceof Patient && user.getName().equalsIgnoreCase(patientName)) {
+                patient = (Patient) user;
+                break;
+            }
+        }
+        
+        if (patient == null) {
+            System.out.println("Patient not found!");
+            return;
+        }
+
+        // Ask for feedback
+        System.out.print("Enter Feedback: ");
+        String feedbackText = scanner.nextLine();
+        System.out.print("Enter Prescription Medicine (comma separated): ");
+        String medicineInput = scanner.nextLine();
+        String[] medicines = medicineInput.split(",");  // Split medicines by comma
+        List<Prescription> medications = new ArrayList<>();
+        
+        for (String medicine : medicines) {
+            System.out.print("Enter Dosage for " + medicine.trim() + ": ");
+            String dosage = scanner.nextLine();
+            System.out.print("Enter Schedule for " + medicine.trim() + ": ");
+            String schedule = scanner.nextLine();
+            Prescription prescription = new Prescription(medicine.trim(), dosage, schedule, patient.getId());
+            medications.add(prescription);
+        }
+
+        Feedback feedback = new Feedback(feedbackText, medications, patient.getId());
+        patient.addFeedback(feedback);
+        System.out.println("Doctor's feedback added successfully!");
+    }
+}
+
+
+
+
